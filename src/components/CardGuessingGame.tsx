@@ -334,18 +334,18 @@ export default function CardGuessingGame({
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3">
+              {/* Action Buttons - Mobile Optimized */}
+              <div className="flex flex-row gap-3">
                 <button
                   onClick={submitGuess}
                   disabled={!guessInput.trim()}
-                  className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 bg-green-600 text-white py-2 px-3 sm:py-3 sm:px-6 rounded-lg text-sm sm:text-base font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
                   Submit Guess
                 </button>
                 <button
                   onClick={skipCard}
-                  className="flex-1 bg-yellow-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                  className="flex-1 bg-yellow-600 text-white py-2 px-3 sm:py-3 sm:px-6 rounded-lg text-sm sm:text-base font-medium hover:bg-yellow-700 transition-colors"
                 >
                   Skip Card
                 </button>
