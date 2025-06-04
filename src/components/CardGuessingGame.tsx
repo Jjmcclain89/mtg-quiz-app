@@ -279,113 +279,8 @@ export default function CardGuessingGame({
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         
-        {/* Header with Back Button and Score */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <button
-            onClick={onBackToSetup}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors mb-4 md:mb-0"
-          >
-            ← Back to Setup
-          </button>
-          
-          {/* Score Display */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-green-600">{gameState.score}</div>
-              <div className="text-sm text-gray-600">Correct</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-red-600">{gameState.totalGuesses - gameState.score}</div>
-              <div className="text-sm text-gray-600">Incorrect</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600">{gameState.streak}</div>
-              <div className="text-sm text-gray-600">Streak</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-600">{accuracy}%</div>
-              <div className="text-sm text-gray-600">Accuracy</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card Display */}
+        {/* Input Section - TOP PRIORITY for mobile interaction */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              What's the name of this card?
-            </h2>
-            
-            {/* Card Image with Name Overlay */}
-            <div className="flex justify-center mb-6">
-              <div className="relative inline-block">
-                <img
-                  src={getCardImageUrl(gameState.currentCard, 'normal')}
-                  alt="Magic card with hidden name"
-                  className="rounded-lg shadow-lg"
-                  style={{ 
-                    maxHeight: '500px',
-                    width: 'auto',
-                    height: 'auto'
-                  }}
-                />
-                
-                {/* Name Overlay - Only show when guess NOT submitted */}
-                {!gameState.isGuessSubmitted && (
-                  <div 
-                    className="absolute"
-                    style={{
-                      // Positioning to fully cover name text
-                      top: '5.5%',    // Same top position
-                      left: '7%',     // Same left margin
-                      right: '25%',   // Same length
-                      height: '4.2%', // Current working height
-                      backgroundColor: getCardFrameColor(gameState.currentCard),
-                      // Completely opaque with subtle border
-                      opacity: '1',   // Full opacity - no transparency
-                      border: '1px solid rgba(0,0,0,0.15)',
-                      borderRadius: '2px',
-                      // Subtle shadow to blend with card
-                      boxShadow: 'inset 0 1px 1px rgba(0,0,0,0.1)',
-                    }}
-                  />
-                )}
-
-              </div>
-            </div>
-
-            {/* Game Result Display */}
-            {gameState.isGuessSubmitted && (
-              <div className="mb-6">
-                {gameState.isCorrectGuess ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="text-xl font-bold text-green-800">✅ Correct!</h3>
-                    <p className="text-green-700">
-                      The card is <span className="font-bold">{gameState.currentCard.name}</span>
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h3 className="text-xl font-bold text-red-800">
-                      {gameState.lastGuess ? '❌ Incorrect' : '⏭️ Skipped'}
-                    </h3>
-                    <p className="text-red-700">
-                      The card is <span className="font-bold">{gameState.currentCard.name}</span>
-                    </p>
-                    {gameState.lastGuess && (
-                      <p className="text-red-600 text-sm mt-1">
-                        Your guess: "{gameState.lastGuess}"
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Input Section */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
           {!gameState.isGuessSubmitted ? (
             <div className="space-y-4">
               {/* Guess Input with Autocomplete */}
@@ -468,6 +363,122 @@ export default function CardGuessingGame({
             </div>
           )}
         </div>
+
+        {/* Card Display - MAIN CONTENT */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+              What's the name of this card?
+            </h2>
+            
+            {/* Card Image with Name Overlay */}
+            <div className="flex justify-center mb-6">
+              <div className="relative inline-block">
+                <img
+                  src={getCardImageUrl(gameState.currentCard, 'normal')}
+                  alt="Magic card with hidden name"
+                  className="rounded-lg shadow-lg"
+                  style={{ 
+                    maxHeight: '500px',
+                    width: 'auto',
+                    height: 'auto'
+                  }}
+                />
+                
+                {/* Name Overlay - Only show when guess NOT submitted */}
+                {!gameState.isGuessSubmitted && (
+                  <div 
+                    className="absolute"
+                    style={{
+                      // Positioning to fully cover name text
+                      top: '5.5%',    // Same top position
+                      left: '7%',     // Same left margin
+                      right: '25%',   // Same length
+                      height: '4.2%', // Current working height
+                      backgroundColor: getCardFrameColor(gameState.currentCard),
+                      // Completely opaque with subtle border
+                      opacity: '1',   // Full opacity - no transparency
+                      border: '1px solid rgba(0,0,0,0.15)',
+                      borderRadius: '2px',
+                      // Subtle shadow to blend with card
+                      boxShadow: 'inset 0 1px 1px rgba(0,0,0,0.1)',
+                    }}
+                  />
+                )}
+
+              </div>
+            </div>
+
+            {/* Game Result Display */}
+            {gameState.isGuessSubmitted && (
+              <div className="mb-6">
+                {gameState.isCorrectGuess ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 className="text-xl font-bold text-green-800">✅ Correct!</h3>
+                    <p className="text-green-700">
+                      The card is <span className="font-bold">{gameState.currentCard.name}</span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h3 className="text-xl font-bold text-red-800">
+                      {gameState.lastGuess ? '❌ Incorrect' : '⏭️ Skipped'}
+                    </h3>
+                    <p className="text-red-700">
+                      The card is <span className="font-bold">{gameState.currentCard.name}</span>
+                    </p>
+                    {gameState.lastGuess && (
+                      <p className="text-red-600 text-sm mt-1">
+                        Your guess: "{gameState.lastGuess}"
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Stats + Back Button Panel - Unified White Background */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            
+            {/* Score Display */}
+            <div className="flex justify-center lg:justify-start">
+              <div className="flex items-center space-x-8 text-center">
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-bold text-green-600">{gameState.score}</div>
+                  <div className="text-sm text-gray-600">Correct</div>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-bold text-red-600">{gameState.totalGuesses - gameState.score}</div>
+                  <div className="text-sm text-gray-600">Incorrect</div>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-bold text-blue-600">{gameState.streak}</div>
+                  <div className="text-sm text-gray-600">Streak</div>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-bold text-gray-600">{accuracy}%</div>
+                  <div className="text-sm text-gray-600">Accuracy</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Back Button - Inside Same Panel */}
+            <div className="lg:flex-shrink-0">
+              <div className="text-center lg:text-right">
+                <button
+                  onClick={onBackToSetup}
+                  className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  ← Back to Setup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
