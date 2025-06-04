@@ -5,6 +5,11 @@ import {
   getCardImageUrl, 
   cardNamesMatch 
 } from '../services/scryfall';
+import { 
+  loadGameState, 
+  saveGameProgress,
+  resetGameScores 
+} from '../services/persistence';
 import type { ScryfallCard, GameState } from '../types';
 
 interface CardGuessingGameProps {
@@ -42,7 +47,7 @@ export default function CardGuessingGame({
   selectedSet,
   onBackToSetup
 }: CardGuessingGameProps) {
-  // Game state
+  // Game state (will be restored from localStorage)
   const [gameState, setGameState] = useState<GameState>({
     currentCard: null,
     isLoading: false,
@@ -54,20 +59,69 @@ export default function CardGuessingGame({
     totalGuesses: 0
   });
 
-  // Input state
+  // Input state (will be restored from localStorage)
   const [guessInput, setGuessInput] = useState('');
+  
+  // Autocomplete state (not persisted - ephemeral)
   const [autocompleteOptions, setAutocompleteOptions] = useState<string[]>([]);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [isLoadingAutocomplete, setIsLoadingAutocomplete] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
+  // State restoration tracking
+  const [isStateRestored, setIsStateRestored] = useState(false);
+
   // Refs
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load first card when component mounts
+  // Restore game state from localStorage on mount
   useEffect(() => {
-    loadNewCard();
+    try {
+      const persistedState = loadGameState();
+      
+      // Restore game progress
+      setGameState({
+        currentCard: persistedState.currentCard,
+        isLoading: false,
+        isGuessSubmitted: persistedState.isGuessSubmitted,
+        lastGuess: persistedState.lastGuess,
+        isCorrectGuess: persistedState.isCorrectGuess,
+        score: persistedState.score,
+        streak: persistedState.streak,
+        totalGuesses: persistedState.totalGuesses
+      });
+      
+      // Restore input state
+      setGuessInput(persistedState.guessInput);
+      
+      setIsStateRestored(true);
+      
+      console.log('Game state restored from localStorage:', {
+        score: persistedState.score,
+        streak: persistedState.streak,
+        totalGuesses: persistedState.totalGuesses,
+        hasCurrentCard: !!persistedState.currentCard,
+        isGuessSubmitted: persistedState.isGuessSubmitted
+      });
+      
+      // If no current card was saved, load a new one
+      if (!persistedState.currentCard) {
+        loadNewCard();
+      }
+      
+    } catch (error) {
+      console.error('Failed to restore game state:', error);
+      setIsStateRestored(true);
+      loadNewCard(); // Start fresh on restoration failure
+    }
   }, []);
+
+  // Auto-save game progress whenever gameState or guessInput changes
+  useEffect(() => {
+    if (isStateRestored) {
+      saveGameProgress(gameState, guessInput);
+    }
+  }, [gameState, guessInput, isStateRestored]);
 
   // Focus input when new card loads
   useEffect(() => {
@@ -180,6 +234,22 @@ export default function CardGuessingGame({
     loadNewCard();
   };
 
+  const resetScores = () => {
+    resetGameScores();
+    setGameState(prev => ({
+      ...prev,
+      score: 0,
+      streak: 0,
+      totalGuesses: 0,
+      currentCard: null,
+      isGuessSubmitted: false,
+      lastGuess: '',
+      isCorrectGuess: null
+    }));
+    setGuessInput('');
+    loadNewCard();
+  };
+
   const handleInputChange = (value: string) => {
     setGuessInput(value);
   };
@@ -237,12 +307,24 @@ export default function CardGuessingGame({
     ? Math.round((gameState.score / gameState.totalGuesses) * 100) 
     : 0;
 
+  // Show loading while restoring state
+  if (!isStateRestored) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-xl text-gray-600">Restoring your game...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (gameState.isLoading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600">Loading your first card...</p>
+          <p className="text-xl text-gray-600">Loading your next card...</p>
         </div>
       </div>
     );
@@ -465,9 +547,16 @@ export default function CardGuessingGame({
               </div>
             </div>
 
-            {/* Back Button - Inside Same Panel */}
+            {/* Action Buttons - Inside Same Panel */}
             <div className="lg:flex-shrink-0">
-              <div className="text-center lg:text-right">
+              <div className="flex flex-col sm:flex-row gap-3 lg:text-right">
+                <button
+                  onClick={resetScores}
+                  className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm"
+                  title="Reset all scores and start fresh"
+                >
+                  Reset Scores
+                </button>
                 <button
                   onClick={onBackToSetup}
                   className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"

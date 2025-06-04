@@ -37,6 +37,7 @@ export interface ScryfallCard {
   legalities: {
     [format: string]: 'legal' | 'not_legal' | 'restricted' | 'banned';
   };
+  color_identity?: string[];
 }
 
 export interface ScryfallSearchResponse {
@@ -101,6 +102,44 @@ export interface FilterOptions {
 }
 
 // =============================================================================
+// PERSISTENCE TYPES
+// =============================================================================
+
+export interface PersistedGameState {
+  // App-level state
+  selectedFormat: string | null;
+  selectedSet: string | null;
+  isGameActive: boolean;
+  
+  // Game scores and progress
+  score: number;
+  streak: number;
+  totalGuesses: number;
+  
+  // Current game state
+  currentCard: ScryfallCard | null;
+  isGuessSubmitted: boolean;
+  lastGuess: string;
+  isCorrectGuess: boolean | null;
+  guessInput: string;
+  
+  // Metadata
+  version: string;
+  lastSaved: string;
+}
+
+export interface StorageMeta {
+  version: string;
+  timestamp: string;
+  dataSize?: number;
+}
+
+export interface GameStateSnapshot {
+  state: PersistedGameState;
+  meta: StorageMeta;
+}
+
+// =============================================================================
 // API ERROR TYPES
 // =============================================================================
 
@@ -130,4 +169,26 @@ export interface LoadingStates {
   sets: LoadingState;
   cards: LoadingState;
   autocomplete: LoadingState;
+}
+
+// =============================================================================
+// PERSISTENCE UTILITY TYPES
+// =============================================================================
+
+export type PersistenceOperation = 'save' | 'load' | 'clear' | 'reset';
+
+export interface PersistenceResult {
+  success: boolean;
+  operation: PersistenceOperation;
+  data?: any;
+  error?: string;
+}
+
+export interface StorageInfo {
+  available: boolean;
+  hasData?: boolean;
+  version?: string;
+  timestamp?: string;
+  dataSize?: number;
+  error?: string;
 }
