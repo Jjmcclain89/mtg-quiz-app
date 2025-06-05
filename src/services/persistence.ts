@@ -8,16 +8,17 @@ import type { ScryfallCard, GameState } from '../types';
 // =============================================================================
 
 const STORAGE_KEY = 'mtg-quiz-app-state';
-const STORAGE_VERSION = '3.0'; // Incremented for multiple sets version
+const STORAGE_VERSION = '3.0'; // Incremented for multiple choice version
 
 // =============================================================================
 // TYPESCRIPT INTERFACES FOR PERSISTED STATE
 // =============================================================================
 
 export interface PersistedGameState {
-  // App-level state - multiple sets
+  // App-level state - multiple sets support
   selectedSets: string[];
   isGameActive: boolean;
+  inputMode: 'multiplechoice' | 'plaintext' | 'multiplechoice';
   
   // Game scores and progress
   score: number;
@@ -30,6 +31,8 @@ export interface PersistedGameState {
   lastGuess: string;
   isCorrectGuess: boolean | null;
   guessInput: string;
+  multipleChoiceOptions?: string[];
+  selectedChoice?: string;
   
   // Metadata
   version: string;
@@ -47,9 +50,10 @@ interface StorageWrapper {
 // =============================================================================
 
 const DEFAULT_PERSISTED_STATE: PersistedGameState = {
-  // App filters - multiple sets
+  // App filters - multiple sets support
   selectedSets: [],
   isGameActive: false,
+  inputMode: 'multiplechoice',
   
   // Game progress
   score: 0,
@@ -62,6 +66,8 @@ const DEFAULT_PERSISTED_STATE: PersistedGameState = {
   lastGuess: '',
   isCorrectGuess: null,
   guessInput: '',
+  multipleChoiceOptions: [],
+  selectedChoice: null,
   
   // Metadata
   version: STORAGE_VERSION,
@@ -123,7 +129,8 @@ export function saveGameState(state: Partial<PersistedGameState>): boolean {
       totalGuesses: updatedState.totalGuesses,
       isGameActive: updatedState.isGameActive,
       hasCurrentCard: !!updatedState.currentCard,
-      selectedSetsCount: updatedState.selectedSets.length
+      selectedSets: updatedState.selectedSets,
+      inputMode: updatedState.inputMode
     });
     
     return true;
@@ -168,9 +175,11 @@ export function loadGameState(): PersistedGameState {
     const loadedState: PersistedGameState = {
       ...DEFAULT_PERSISTED_STATE,
       ...parsed.data,
-      // Ensure selectedSets is always an array
-      selectedSets: Array.isArray(parsed.data.selectedSets) ? parsed.data.selectedSets : [],
-      version: STORAGE_VERSION // Ensure version is current
+      version: STORAGE_VERSION, // Ensure version is current
+      selectedSets: parsed.data.selectedSets || [],
+      inputMode: parsed.data.inputMode || 'multiplechoice',
+      multipleChoiceOptions: parsed.data.multipleChoiceOptions || [],
+      selectedChoice: parsed.data.selectedChoice || null
     };
     
     console.log('Game state loaded successfully:', {
@@ -179,8 +188,8 @@ export function loadGameState(): PersistedGameState {
       totalGuesses: loadedState.totalGuesses,
       isGameActive: loadedState.isGameActive,
       hasCurrentCard: !!loadedState.currentCard,
-      selectedSetsCount: loadedState.selectedSets.length,
       selectedSets: loadedState.selectedSets,
+      inputMode: loadedState.inputMode,
       lastSaved: loadedState.lastSaved
     });
     
@@ -211,7 +220,7 @@ export function clearGameState(): boolean {
 }
 
 /**
- * Reset game scores while preserving set selections
+ * Reset game scores while preserving set settings
  */
 export function resetGameScores(): boolean {
   const currentState = loadGameState();
@@ -225,21 +234,24 @@ export function resetGameScores(): boolean {
     lastGuess: '',
     isCorrectGuess: null,
     guessInput: '',
+    multipleChoiceOptions: [],
+    selectedChoice: null,
     isGameActive: false
   });
 }
 
 /**
- * Save set preferences (multiple sets)
+ * Save only set preferences
  */
-export function saveSetPreferences(sets: string[]): boolean {
+export function saveSetPreference(sets: string[]): boolean {
   return saveGameState({
-    selectedSets: [...sets] // Create copy to avoid reference issues
+    selectedSets: sets
   });
 }
 
 /**
  * Save only game progress (scores, current card, etc.)
+ * Updated to match the expected signature from CardGuessingGame
  */
 export function saveGameProgress(gameState: GameState, guessInput: string): boolean {
   return saveGameState({
@@ -250,7 +262,10 @@ export function saveGameProgress(gameState: GameState, guessInput: string): bool
     isGuessSubmitted: gameState.isGuessSubmitted,
     lastGuess: gameState.lastGuess,
     isCorrectGuess: gameState.isCorrectGuess,
-    guessInput: guessInput
+    guessInput: guessInput,
+    inputMode: gameState.inputMode,
+    multipleChoiceOptions: gameState.multipleChoiceOptions || [],
+    selectedChoice: gameState.selectedChoice || null
   });
 }
 
@@ -259,37 +274,6 @@ export function saveGameProgress(gameState: GameState, guessInput: string): bool
  */
 export function saveGameActiveStatus(isGameActive: boolean): boolean {
   return saveGameState({ isGameActive });
-}
-
-/**
- * Add a set to current selection
- */
-export function addSetToSelection(setCode: string): boolean {
-  const currentState = loadGameState();
-  const currentSets = currentState.selectedSets || [];
-  
-  if (!currentSets.includes(setCode)) {
-    return saveSetPreferences([...currentSets, setCode]);
-  }
-  
-  return true; // Already in selection
-}
-
-/**
- * Remove a set from current selection
- */
-export function removeSetFromSelection(setCode: string): boolean {
-  const currentState = loadGameState();
-  const currentSets = currentState.selectedSets || [];
-  
-  return saveSetPreferences(currentSets.filter(code => code !== setCode));
-}
-
-/**
- * Clear all set selections
- */
-export function clearSetSelections(): boolean {
-  return saveSetPreferences([]);
 }
 
 // =============================================================================
@@ -338,10 +322,6 @@ export function exportGameState(): string {
 export function importGameState(jsonData: string): boolean {
   try {
     const importedState = JSON.parse(jsonData);
-    // Ensure selectedSets is an array
-    if (importedState.selectedSets && !Array.isArray(importedState.selectedSets)) {
-      importedState.selectedSets = [];
-    }
     return saveGameState(importedState);
   } catch (error) {
     console.error('Failed to import game state:', error);

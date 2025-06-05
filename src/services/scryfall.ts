@@ -263,8 +263,6 @@ export async function getCardNameAutocomplete(query: string): Promise<string[]> 
   }
 }
 
-
-
 // Cache for card names from selected sets
 let cardNamesCache: { [key: string]: string[] } = {};
 let cacheKey = '';
@@ -348,12 +346,95 @@ export async function getCardNameAutocompleteFromSets(query: string, setCodes: s
 }
 
 // =============================================================================
-// UTILITY FUNCTIONS
+// MULTIPLE CHOICE GENERATION
 // =============================================================================
 
 /**
- * Get the best image URL for a card (handles double-faced cards)
+ * Generate multiple choice options for a card
+ * Uses smart algorithms to create plausible but incorrect options
  */
+export async function generateMultipleChoiceOptions(
+  correctCard: ScryfallCard,
+  selectedSets: string[]
+): Promise<{ text: string; isCorrect: boolean }[]> {
+  try {
+    console.log('Generating efficient multiple choice for:', correctCard.name);
+    
+    // Get one batch of random cards from the same search that found the correct card
+    let availableCards: ScryfallCard[] = [];
+    
+    try {
+      // Make ONE API call to get a bunch of cards
+      const searchResponse = await searchCardsMultipleSets(selectedSets);
+      availableCards = searchResponse.data || [];
+      console.log('Got', availableCards.length, 'cards from single API call');
+    } catch (error) {
+      console.warn('Failed to get card pool, using fallbacks:', error);
+    }
+    
+    // Remove the correct card from available options
+    const wrongAnswerCandidates = availableCards.filter(card => card.name !== correctCard.name);
+    
+    // Pick 3 random wrong answers from the available cards
+    const wrongAnswers: string[] = [];
+    const shuffledCandidates = [...wrongAnswerCandidates];
+    
+    // Shuffle the array
+    for (let i = shuffledCandidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledCandidates[i], shuffledCandidates[j]] = [shuffledCandidates[j], shuffledCandidates[i]];
+    }
+    
+    // Take the first 3 unique cards as wrong answers
+    for (const card of shuffledCandidates) {
+      if (wrongAnswers.length >= 3) break;
+      if (!wrongAnswers.includes(card.name)) {
+        wrongAnswers.push(card.name);
+      }
+    }
+    
+    // Fill any remaining slots with fallbacks if needed
+    const fallbacks = ['Lightning Bolt', 'Counterspell', 'Giant Growth', 'Sol Ring', 'Path to Exile'];
+    for (const fallback of fallbacks) {
+      if (wrongAnswers.length >= 3) break;
+      if (fallback !== correctCard.name && !wrongAnswers.includes(fallback)) {
+        wrongAnswers.push(fallback);
+      }
+    }
+    
+    // Create the options array
+    const options = [
+      { text: correctCard.name, isCorrect: true },
+      { text: wrongAnswers[0] || 'Lightning Bolt', isCorrect: false },
+      { text: wrongAnswers[1] || 'Counterspell', isCorrect: false },
+      { text: wrongAnswers[2] || 'Giant Growth', isCorrect: false }
+    ];
+    
+    console.log('Efficient multiple choice options:', options.map(o => o.text));
+    
+    // Shuffle the options so correct answer isn't always first
+    return shuffleArray(options);
+  } catch (error) {
+    console.error('Error generating efficient multiple choice options:', error);
+    
+    // Ultra-safe fallback
+    return [
+      { text: correctCard.name, isCorrect: true },
+      { text: 'Lightning Bolt', isCorrect: false },
+      { text: 'Counterspell', isCorrect: false },
+      { text: 'Giant Growth', isCorrect: false }
+    ];
+  }
+}
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 export function getCardImageUrl(card: ScryfallCard, size: 'small' | 'normal' | 'large' = 'normal'): string {
   // Handle double-faced cards (use front face)
   if (card.card_faces && card.card_faces[0]?.image_uris) {

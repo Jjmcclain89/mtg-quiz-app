@@ -90,6 +90,9 @@ export interface GameState {
   score: number;
   streak: number;
   totalGuesses: number;
+  inputMode: 'autocomplete' | 'plaintext' | 'multiplechoice';
+  multipleChoiceOptions?: string[];
+  selectedChoice?: string;
 }
 
 export interface FilterOptions {
@@ -102,6 +105,22 @@ export interface FilterOptions {
 }
 
 // =============================================================================
+// MULTIPLE CHOICE TYPES
+// =============================================================================
+
+export interface MultipleChoiceOption {
+  text: string;
+  isCorrect: boolean;
+  cardId?: string;
+}
+
+export interface MultipleChoiceState {
+  options: MultipleChoiceOption[];
+  selectedIndex: number | null;
+  isSubmitted: boolean;
+}
+
+// =============================================================================
 // PERSISTENCE TYPES
 // =============================================================================
 
@@ -110,6 +129,7 @@ export interface PersistedGameState {
   selectedFormat: string | null;
   selectedSet: string | null;
   isGameActive: boolean;
+  inputMode: 'autocomplete' | 'plaintext' | 'multiplechoice';
   
   // Game scores and progress
   score: number;
@@ -122,6 +142,8 @@ export interface PersistedGameState {
   lastGuess: string;
   isCorrectGuess: boolean | null;
   guessInput: string;
+  multipleChoiceOptions?: string[];
+  selectedChoice?: string;
   
   // Metadata
   version: string;

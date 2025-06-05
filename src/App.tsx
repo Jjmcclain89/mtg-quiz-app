@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import FilterDropdowns from './components/FilterDropdowns';
-import InfoDisplay from './components/InfoDisplay';
+
+
 import CardGuessingGame from './components/CardGuessingGame';
 import { 
   loadGameState, 
-  saveSetPreferences, 
+  saveSetPreference, 
   saveGameActiveStatus 
 } from './services/persistence';
 import type { ScryfallSearchResponse } from './types';
@@ -14,8 +15,11 @@ function App() {
   // Initialize state from localStorage
   const [isStateLoaded, setIsStateLoaded] = useState(false);
   
-  // Filter state - multiple sets
+  // Filter state - multiple sets support
   const [selectedSets, setSelectedSets] = useState<string[]>([]);
+  
+  // Input mode state
+  const [inputMode, setInputMode] = useState<'autocomplete' | 'plaintext' | 'multiplechoice'>('multiplechoice');
   
   // Search results state
   const [searchResults, setSearchResults] = useState<ScryfallSearchResponse | null>(null);
@@ -30,11 +34,11 @@ function App() {
     try {
       const persistedState = loadGameState();
       
-      // Restore set preferences (now an array)
-      setSelectedSets(persistedState.selectedSets || []);
-      
       // Restore game active status
       setIsGameActive(persistedState.isGameActive);
+      
+      // Restore input mode
+      setInputMode(persistedState.inputMode || 'multiplechoice');
       
       setIsStateLoaded(true);
       
@@ -44,13 +48,6 @@ function App() {
       setIsStateLoaded(true); // Continue with defaults
     }
   }, []);
-
-  // Save set preferences when they change
-  useEffect(() => {
-    if (isStateLoaded) {
-      saveSetPreferences(selectedSets);
-    }
-  }, [selectedSets, isStateLoaded]);
 
   // Save game active status when it changes
   useEffect(() => {
@@ -97,50 +94,39 @@ function App() {
     return (
       <CardGuessingGame
         selectedSets={selectedSets}
+        inputMode={inputMode}
         onBackToSetup={backToSetup}
       />
     );
   }
 
-  // Setup view - simplified layout with integrated start button
+  // Setup view - responsive layout
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl font-bold text-gray-800">
             MTG Card Name Learning Tool
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Test your Magic: The Gathering knowledge! Choose your favorite sets 
-            to create a custom card pool, then guess card names from images.
-          </p>
         </header>
 
-        {/* Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          {/* Left Column: Game Settings with Integrated Start Button */}
-          <div>
-            <FilterDropdowns
-              selectedSets={selectedSets}
-              onSetsChange={setSelectedSets}
-              onSearchResults={handleSearchResults}
-              onSearchLoading={handleSearchLoading}
-              onSearchError={handleSearchError}
-              onStartGame={startGame}
-            />
-          </div>
-
-          {/* Right Column: Game Information */}
-          <div>
-            <InfoDisplay
-              searchResults={searchResults}
-              selectedSets={selectedSets}
-              isSearchLoading={isSearchLoading}
-              searchError={searchError}
-            />
-          </div>
+        {/* Unified Layout */}
+        <div className="max-w-2xl mx-auto">
+          <FilterDropdowns
+            selectedSets={selectedSets}
+            onSetsChange={setSelectedSets}
+            onSearchResults={handleSearchResults}
+            onSearchLoading={handleSearchLoading}
+            onSearchError={handleSearchError}
+            onBackToGame={null}
+            inputMode={inputMode}
+            onInputModeChange={setInputMode}
+            searchResults={searchResults}
+            isSearchLoading={isSearchLoading}
+            searchError={searchError}
+            onStartGame={startGame}
+          />
         </div>
 
         {/* Footer */}
