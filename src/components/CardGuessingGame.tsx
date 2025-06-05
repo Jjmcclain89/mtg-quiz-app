@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   getRandomCardFromSets, 
   getCardNameAutocomplete, 
+  getCardNameAutocompleteFromSets,
   getCardImageUrl, 
   cardNamesMatch 
 } from '../services/scryfall';
@@ -15,6 +16,11 @@ import type { ScryfallCard, GameState } from '../types';
 interface CardGuessingGameProps {
   selectedSets: string[];
   onBackToSetup: () => void;
+}
+
+// Mobile detection utility
+function isMobileDevice(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
 // Helper function to get card frame color for overlay (completely opaque)
@@ -121,10 +127,14 @@ export default function CardGuessingGame({
     }
   }, [gameState, guessInput, isStateRestored]);
 
-  // Focus input when new card loads
+
+  // Mobile UX: Input focus is manual to keep card image visible  // Focus input when new card loads (desktop only - prevent mobile keyboard popup)
   useEffect(() => {
     if (gameState.currentCard && !gameState.isGuessSubmitted && inputRef.current) {
-      inputRef.current.focus();
+      // Only auto-focus on non-mobile devices to prevent keyboard covering card
+      if (!isMobileDevice()) {
+        inputRef.current.focus();
+      }
     }
   }, [gameState.currentCard, gameState.isGuessSubmitted]);
 
@@ -147,7 +157,7 @@ export default function CardGuessingGame({
     const fetchAutocomplete = async () => {
       try {
         setIsLoadingAutocomplete(true);
-        const suggestions = await getCardNameAutocomplete(guessInput);
+        const suggestions = await getCardNameAutocompleteFromSets(guessInput, selectedSets);
         setAutocompleteOptions(suggestions.slice(0, 8)); // Limit to 8 suggestions
         setShowAutocomplete(suggestions.length > 0);
       } catch (error) {
@@ -296,7 +306,7 @@ export default function CardGuessingGame({
     setGuessInput(option);
     setShowAutocomplete(false);
     setHighlightedIndex(-1);
-    if (inputRef.current) {
+    if (inputRef.current && !isMobileDevice()) {
       inputRef.current.focus();
     }
   };

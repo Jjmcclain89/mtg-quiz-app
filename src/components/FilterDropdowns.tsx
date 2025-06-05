@@ -11,15 +11,6 @@ interface FilterDropdownsProps {
   onStartGame: () => void;
 }
 
-// Format preset mappings - simplified but accurate
-const FORMAT_SETS = {
-  standard: ['dmu', 'bro', 'one', 'mom', 'mat', 'woe', 'lci', 'mkm', 'otj', 'blb', 'dsk', 'fdn', 'dft'],
-  pioneer: ['rtr', 'gtc', 'dgm', 'm14', 'ths', 'bng', 'jou', 'm15', 'ktk', 'frf', 'dtk', 'ori', 'bfz', 'ogw', 'soi', 'emn', 'kld', 'aer', 'akh', 'hou', 'xln', 'rix', 'dom', 'm19', 'grn', 'rna', 'war', 'm20', 'eld', 'thb', 'iko', 'm21', 'znr', 'khm', 'stx', 'afr', 'mid', 'vow', 'neo', 'snc', 'dmu', 'bro', 'one', 'mom', 'mat', 'woe', 'lci', 'mkm', 'otj', 'blb', 'dsk', 'fdn', 'dft'],
-  modern: ['8ed', 'mrd', 'dst', '5dn', 'chk', 'bok', 'sok', '9ed', 'rav', 'gpt', 'dis', 'csp', 'tsp', 'tsb', 'plc', 'fut', '10e', 'lrw', 'mor', 'shm', 'eve', 'ala', 'con', 'arb', 'm10', 'zen', 'wwk', 'roe', 'm11', 'som', 'mbs', 'nph', 'm12', 'isd', 'dka', 'avr', 'm13', 'rtr', 'gtc', 'dgm', 'm14', 'ths', 'bng', 'jou', 'm15', 'ktk', 'frf', 'dtk', 'ori', 'bfz', 'ogw', 'soi', 'emn', 'kld', 'aer', 'akh', 'hou', 'xln', 'rix', 'dom', 'm19', 'grn', 'rna', 'war', 'm20', 'eld', 'thb', 'iko', 'm21', 'znr', 'khm', 'stx', 'afr', 'mid', 'vow', 'neo', 'snc', 'dmu', 'bro', 'one', 'mom', 'mat', 'woe', 'lci', 'mkm', 'otj', 'blb', 'dsk', 'fdn', 'dft', 'mh2', 'mh3'],
-  legacy: ['lea', 'leb', '2ed', 'arn', 'atq', '3ed', 'leg', 'drk', 'fem', '4ed', 'ice', 'hml', 'all', 'mir', 'vis', 'wth', 'tmp', 'sth', 'exo', 'usg', 'ulg', 'uds', '6ed', 'mmq', 'nem', 'pcy', 'inv', 'pls', 'apc', '7ed', 'ody', 'tor', 'jud', 'ons', 'lgn', 'scg', '8ed', 'mrd', 'dst', '5dn', 'chk', 'bok', 'sok', '9ed', 'rav', 'gpt', 'dis', 'csp', 'tsp', 'tsb', 'plc', 'fut', '10e', 'lrw', 'mor', 'shm', 'eve', 'ala', 'con', 'arb', 'm10', 'zen', 'wwk', 'roe', 'm11', 'som', 'mbs', 'nph', 'm12', 'isd', 'dka', 'avr', 'm13', 'rtr', 'gtc', 'dgm', 'm14', 'ths', 'bng', 'jou', 'm15', 'ktk', 'frf', 'dtk', 'ori', 'bfz', 'ogw', 'soi', 'emn', 'kld', 'aer', 'akh', 'hou', 'xln', 'rix', 'dom', 'm19', 'grn', 'rna', 'war', 'm20', 'eld', 'thb', 'iko', 'm21', 'znr', 'khm', 'stx', 'afr', 'mid', 'vow', 'neo', 'snc', 'dmu', 'bro', 'one', 'mom', 'mat', 'woe', 'lci', 'mkm', 'otj', 'blb', 'dsk', 'fdn', 'dft'],
-  vintage: ['lea', 'leb', '2ed', 'arn', 'atq', '3ed', 'leg', 'drk', 'fem', '4ed', 'ice', 'hml', 'all', 'mir', 'vis', 'wth', 'tmp', 'sth', 'exo', 'usg', 'ulg', 'uds', '6ed', 'mmq', 'nem', 'pcy', 'inv', 'pls', 'apc', '7ed', 'ody', 'tor', 'jud', 'ons', 'lgn', 'scg', '8ed', 'mrd', 'dst', '5dn', 'chk', 'bok', 'sok', '9ed', 'rav', 'gpt', 'dis', 'csp', 'tsp', 'tsb', 'plc', 'fut', '10e', 'lrw', 'mor', 'shm', 'eve', 'ala', 'con', 'arb', 'm10', 'zen', 'wwk', 'roe', 'm11', 'som', 'mbs', 'nph', 'm12', 'isd', 'dka', 'avr', 'm13', 'rtr', 'gtc', 'dgm', 'm14', 'ths', 'bng', 'jou', 'm15', 'ktk', 'frf', 'dtk', 'ori', 'bfz', 'ogw', 'soi', 'emn', 'kld', 'aer', 'akh', 'hou', 'xln', 'rix', 'dom', 'm19', 'grn', 'rna', 'war', 'm20', 'eld', 'thb', 'iko', 'm21', 'znr', 'khm', 'stx', 'afr', 'mid', 'vow', 'neo', 'snc', 'dmu', 'bro', 'one', 'mom', 'mat', 'woe', 'lci', 'mkm', 'otj', 'blb', 'dsk', 'fdn', 'dft']
-};
-
 export default function FilterDropdowns({
   selectedSets,
   onSetsChange,
@@ -119,13 +110,16 @@ export default function FilterDropdowns({
 
   const handleInputFocus = () => {
     setIsDropdownOpen(true);
+    // Input focus handles opening dropdown when clicking text area
   };
 
+
+  // Mobile-friendly dropdown behavior:
+  // - Clicking caret: Opens dropdown without focusing input (no keyboard popup)
+  // - Clicking input: Focuses input and opens dropdown (keyboard shows)
   const handleDropdownToggle = () => {
     setIsDropdownOpen(!isDropdownOpen);
-    if (!isDropdownOpen) {
-      inputRef.current?.focus();
-    }
+    // Don't focus input when clicking dropdown caret (better mobile UX)
   };
 
   const handleSetSelect = (setCode: string) => {
@@ -187,14 +181,7 @@ export default function FilterDropdowns({
     onSetsChange([]);
   };
 
-  const handleFormatPreset = (format: keyof typeof FORMAT_SETS) => {
-    const formatSets = FORMAT_SETS[format];
-    // Filter to only include sets that actually exist in our loaded sets
-    const availableSets = formatSets.filter(code => 
-      sets.some(set => set.code === code)
-    );
-    onSetsChange(availableSets);
-  };
+;
 
   const getFilteredSets = () => {
     let filteredSets = sets;
@@ -218,47 +205,10 @@ export default function FilterDropdowns({
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Game Settings</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Select Magic Sets</h2>
       
       <div className="space-y-6">
         
-        {/* Format Presets */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Format Presets:</h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => handleFormatPreset('standard')}
-              className="px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-            >
-              Standard
-            </button>
-            <button
-              onClick={() => handleFormatPreset('pioneer')}
-              className="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-            >
-              Pioneer
-            </button>
-            <button
-              onClick={() => handleFormatPreset('modern')}
-              className="px-3 py-2 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-            >
-              Modern
-            </button>
-            <button
-              onClick={() => handleFormatPreset('legacy')}
-              className="px-3 py-2 text-sm bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors"
-            >
-              Legacy
-            </button>
-            <button
-              onClick={() => handleFormatPreset('vintage')}
-              className="px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-            >
-              Vintage
-            </button>
-          </div>
-        </div>
-
         {/* Searchable Set Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <label htmlFor="set-search" className="block text-sm font-medium text-gray-700 mb-2">
@@ -285,6 +235,7 @@ export default function FilterDropdowns({
               onClick={handleDropdownToggle}
               disabled={isSetsLoading}
               className="absolute inset-y-0 right-0 flex items-center px-3 disabled:cursor-not-allowed"
+              onMouseDown={(e) => e.preventDefault()} // Prevent input blur on button click
             >
               <svg
                 className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${

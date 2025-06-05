@@ -263,6 +263,90 @@ export async function getCardNameAutocomplete(query: string): Promise<string[]> 
   }
 }
 
+
+
+// Cache for card names from selected sets
+let cardNamesCache: { [key: string]: string[] } = {};
+let cacheKey = '';
+
+/**
+ * Get autocomplete suggestions for card names from specific sets only
+ * Uses local filtering from cached card names for better performance
+ */
+export async function getCardNameAutocompleteFromSets(query: string, setCodes: string[]): Promise<string[]> {
+  if (!query || query.length < 2 || !setCodes || setCodes.length === 0) {
+    return [];
+  }
+  
+  try {
+    // Create cache key from selected sets
+    const currentCacheKey = setCodes.sort().join(',');
+    
+    // If cache is stale or doesn't exist, rebuild it
+    if (cacheKey !== currentCacheKey || !cardNamesCache[currentCacheKey]) {
+      console.log(`Building card names cache for ${setCodes.length} sets...`);
+      
+      // Get first page of cards from selected sets to build name cache
+      const searchResponse = await searchCardsMultipleSets(setCodes, 1);
+      
+      if (searchResponse.total_cards === 0) {
+        console.log('No cards found in selected sets, falling back to global autocomplete');
+        return await getCardNameAutocomplete(query);
+      }
+      
+      // Collect card names from multiple pages to build comprehensive cache
+      const allCardNames = new Set<string>();
+      
+      // Add names from first page
+      searchResponse.data.forEach(card => allCardNames.add(card.name));
+      
+      // If there are more pages, get a few more to build better cache
+      if (searchResponse.has_more && searchResponse.total_cards > 175) {
+        try {
+          const page2 = await searchCardsMultipleSets(setCodes, 2);
+          page2.data.forEach(card => allCardNames.add(card.name));
+          
+          if (page2.has_more) {
+            const page3 = await searchCardsMultipleSets(setCodes, 3);
+            page3.data.forEach(card => allCardNames.add(card.name));
+          }
+        } catch (error) {
+          console.log('Could not fetch additional pages, using partial cache');
+        }
+      }
+      
+      // Cache the card names
+      cardNamesCache[currentCacheKey] = Array.from(allCardNames).sort();
+      cacheKey = currentCacheKey;
+      
+      console.log(`Cached ${cardNamesCache[currentCacheKey].length} unique card names from selected sets`);
+    }
+    
+    // Filter cached names based on query
+    const queryLower = query.toLowerCase();
+    const matchingNames = cardNamesCache[currentCacheKey]
+      .filter(name => name.toLowerCase().includes(queryLower))
+      .sort((a, b) => {
+        // Prioritize names that start with the query
+        const aStarts = a.toLowerCase().startsWith(queryLower);
+        const bStarts = b.toLowerCase().startsWith(queryLower);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return a.localeCompare(b);
+      })
+      .slice(0, 8); // Limit to 8 suggestions
+    
+    console.log(`Found ${matchingNames.length} autocomplete matches in selected sets for "${query}"`);
+    return matchingNames;
+    
+  } catch (error) {
+    console.error('Set-specific autocomplete failed:', error);
+    // Fallback to global autocomplete if caching fails
+    console.log('Falling back to global autocomplete');
+    return await getCardNameAutocomplete(query);
+  }
+}
+
 // =============================================================================
 // UTILITY FUNCTIONS
 // =============================================================================
