@@ -362,12 +362,12 @@ export default function CardGuessingGame({
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         
         {/* Input Section - TOP PRIORITY for mobile interaction */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
           {!gameState.isGuessSubmitted ? (
             <div className="space-y-4">
               {/* Guess Input with Autocomplete */}
               <div className="relative">
-                <label htmlFor="guess-input" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="guess-input" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Enter card name:
                 </label>
                 <input
@@ -379,7 +379,7 @@ export default function CardGuessingGame({
                   onKeyDown={handleKeyDown}
                   placeholder="Start typing a card name..."
                   autoComplete="off"
-                  className="w-full p-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 sm:p-4 text-base sm:text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 
                 {/* Autocomplete Dropdown */}
@@ -447,14 +447,14 @@ export default function CardGuessingGame({
         </div>
 
         {/* Card Display - MAIN CONTENT */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            <h2 className="hidden sm:block text-2xl font-bold text-gray-800 mb-6">
               What's the name of this card?
             </h2>
             
             {/* Card Image with Name Overlay */}
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-4 sm:mb-6">
               <div className="relative inline-block">
                 <img
                   src={getCardImageUrl(gameState.currentCard, 'normal')}
