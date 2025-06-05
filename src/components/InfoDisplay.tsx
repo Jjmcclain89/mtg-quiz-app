@@ -3,88 +3,91 @@ import type { ScryfallSearchResponse } from '../types';
 
 interface InfoDisplayProps {
   searchResults: ScryfallSearchResponse | null;
-  selectedFormat: string | null;
-  selectedSet: string | null;
+  selectedSets: string[];
   isSearchLoading: boolean;
   searchError: string | null;
 }
 
-export default function InfoDisplay({ 
-  searchResults, 
-  selectedFormat, 
-  selectedSet,
+export default function InfoDisplay({
+  searchResults,
+  selectedSets,
   isSearchLoading,
   searchError
 }: InfoDisplayProps) {
-  
-  const formatDisplay = selectedFormat 
-    ? selectedFormat.charAt(0).toUpperCase() + selectedFormat.slice(1)
-    : 'All Formats';
-    
-  const setDisplay = selectedSet ? 'Specific Set Selected' : 'All Sets';
-  
-  const cardCount = searchResults?.total_cards || 0;
-
   return (
-    <div className="p-6 bg-white rounded-lg shadow-lg">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4">Ready to Play</h3>
+    <div className="bg-white rounded-lg shadow-lg p-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Game Information</h2>
       
-      {/* Current Selection */}
-      <div className="space-y-3 mb-6">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-gray-600">Format:</span>
-          <span className="text-sm text-gray-800 font-medium">{formatDisplay}</span>
+      <div className="space-y-4">
+        
+        {/* Current Selection Summary */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-800 mb-2">Card Pool:</h3>
+          <div className="text-gray-600">
+            {selectedSets.length > 0 ? (
+              <p>
+                <span className="text-blue-600 font-medium">
+                  {selectedSets.length} set{selectedSets.length !== 1 ? 's' : ''} selected
+                </span>
+              </p>
+            ) : (
+              <p className="text-orange-600">
+                No sets selected - please choose sets to create your card pool
+              </p>
+            )}
+          </div>
         </div>
-        
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-gray-600">Sets:</span>
-          <span className="text-sm text-gray-800 font-medium">{setDisplay}</span>
-        </div>
-        
-        <hr className="border-gray-200" />
-        
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-gray-600">Available Cards:</span>
-          {isSearchLoading ? (
+
+        {/* Search Results */}
+        {isSearchLoading && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              <span className="text-sm text-gray-500">Loading...</span>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+              <div>
+                <h3 className="font-semibold text-blue-800">Searching Cards...</h3>
+                <p className="text-blue-600 text-sm">Finding cards from your selected sets</p>
+              </div>
             </div>
-          ) : searchError ? (
-            <span className="text-sm text-red-600">Error loading</span>
-          ) : (
-            <span className="text-lg font-bold text-blue-600">
-              {cardCount.toLocaleString()}
-            </span>
-          )}
+          </div>
+        )}
+
+        {searchError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 className="font-semibold text-red-800 mb-2">Search Error</h3>
+            <p className="text-red-600 text-sm">{searchError}</p>
+          </div>
+        )}
+
+        {searchResults && !isSearchLoading && !searchError && selectedSets.length > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="font-semibold text-green-800 mb-2">Ready to Play!</h3>
+            <div className="text-green-700 space-y-2">
+              <p className="text-lg font-medium">
+                {searchResults.total_cards.toLocaleString()} cards available
+              </p>
+              <p className="text-sm">
+                Cards from {selectedSets.length} selected set{selectedSets.length !== 1 ? 's' : ''}
+              </p>
+              {searchResults.has_more && (
+                <p className="text-xs text-green-600">
+                  Large card pools provide excellent variety!
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* How to Play */}
+        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+          <h3 className="font-semibold text-indigo-800 mb-2">How to Play</h3>
+          <ul className="text-indigo-700 text-sm space-y-1 list-disc list-inside">
+            <li>Card images appear with names hidden</li>
+            <li>Type the card name with autocomplete help</li>
+            <li>Build your score and accuracy</li>
+            <li>Skip cards if you're not sure</li>
+          </ul>
         </div>
       </div>
-
-      {/* Status Messages */}
-      {cardCount === 0 && !isSearchLoading && !searchError && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-          <p className="text-sm text-yellow-800">
-            <span className="font-medium">No cards available</span> with the current filter selection.
-            Try adjusting your format or set selection.
-          </p>
-        </div>
-      )}
-      
-      {searchError && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-3">
-          <p className="text-sm text-red-800">
-            <span className="font-medium">Error:</span> {searchError}
-          </p>
-        </div>
-      )}
-      
-      {cardCount > 0 && !isSearchLoading && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-3">
-          <p className="text-sm text-green-800">
-            <span className="font-medium">Ready!</span> {cardCount.toLocaleString()} cards available for your quiz.
-          </p>
-        </div>
-      )}
     </div>
   );
 }

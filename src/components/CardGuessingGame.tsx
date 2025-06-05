@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  getRandomCard, 
+  getRandomCardFromSets, 
   getCardNameAutocomplete, 
   getCardImageUrl, 
   cardNamesMatch 
@@ -13,8 +13,7 @@ import {
 import type { ScryfallCard, GameState } from '../types';
 
 interface CardGuessingGameProps {
-  selectedFormat: string | null;
-  selectedSet: string | null;
+  selectedSets: string[];
   onBackToSetup: () => void;
 }
 
@@ -43,8 +42,7 @@ function getCardFrameColor(card: ScryfallCard): string {
 }
 
 export default function CardGuessingGame({ 
-  selectedFormat, 
-  selectedSet,
+  selectedSets,
   onBackToSetup
 }: CardGuessingGameProps) {
   // Game state (will be restored from localStorage)
@@ -168,7 +166,8 @@ export default function CardGuessingGame({
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
       
-      const card = await getRandomCard(selectedFormat, selectedSet);
+      // Use multiple sets for card selection
+      const card = await getRandomCardFromSets(selectedSets);
       
       setGameState(prev => ({
         ...prev,
@@ -336,7 +335,8 @@ export default function CardGuessingGame({
         <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
           <h3 className="text-2xl font-semibold text-gray-700 mb-4">No Card Available</h3>
           <p className="text-gray-600 mb-6">
-            Unable to load a card with the selected filters. This might be a temporary issue.
+            Unable to load a card from the selected sets. This might be a temporary issue,
+            or there may be no cards available in your current selection.
           </p>
           <div className="space-y-3">
             <button
@@ -500,6 +500,9 @@ export default function CardGuessingGame({
                     <p className="text-green-700">
                       The card is <span className="font-bold">{gameState.currentCard.name}</span>
                     </p>
+                    <p className="text-green-600 text-sm mt-1">
+                      From {gameState.currentCard.set_name} ({gameState.currentCard.set.toUpperCase()})
+                    </p>
                   </div>
                 ) : (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -508,6 +511,9 @@ export default function CardGuessingGame({
                     </h3>
                     <p className="text-red-700">
                       The card is <span className="font-bold">{gameState.currentCard.name}</span>
+                    </p>
+                    <p className="text-red-600 text-sm mt-1">
+                      From {gameState.currentCard.set_name} ({gameState.currentCard.set.toUpperCase()})
                     </p>
                     {gameState.lastGuess && (
                       <p className="text-red-600 text-sm mt-1">
@@ -565,6 +571,17 @@ export default function CardGuessingGame({
                 </button>
               </div>
             </div>
+          </div>
+          
+          {/* Sets Info */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600 text-center">
+              Playing with {selectedSets.length} set{selectedSets.length !== 1 ? 's' : ''}: {' '}
+              <span className="font-medium">
+                {selectedSets.slice(0, 3).map(code => code.toUpperCase()).join(', ')}
+                {selectedSets.length > 3 && ` +${selectedSets.length - 3} more`}
+              </span>
+            </p>
           </div>
         </div>
 

@@ -1,11 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import FilterDropdowns from './components/FilterDropdowns';
 import InfoDisplay from './components/InfoDisplay';
-import StartGameButton from './components/StartGameButton';
 import CardGuessingGame from './components/CardGuessingGame';
 import { 
   loadGameState, 
-  saveFilterPreferences, 
+  saveSetPreferences, 
   saveGameActiveStatus 
 } from './services/persistence';
 import type { ScryfallSearchResponse } from './types';
@@ -15,9 +14,8 @@ function App() {
   // Initialize state from localStorage
   const [isStateLoaded, setIsStateLoaded] = useState(false);
   
-  // Filter state
-  const [selectedFormat, setSelectedFormat] = useState<string | null>(null);
-  const [selectedSet, setSelectedSet] = useState<string | null>(null);
+  // Filter state - multiple sets
+  const [selectedSets, setSelectedSets] = useState<string[]>([]);
   
   // Search results state
   const [searchResults, setSearchResults] = useState<ScryfallSearchResponse | null>(null);
@@ -32,9 +30,8 @@ function App() {
     try {
       const persistedState = loadGameState();
       
-      // Restore filter preferences
-      setSelectedFormat(persistedState.selectedFormat);
-      setSelectedSet(persistedState.selectedSet);
+      // Restore set preferences (now an array)
+      setSelectedSets(persistedState.selectedSets || []);
       
       // Restore game active status
       setIsGameActive(persistedState.isGameActive);
@@ -48,12 +45,12 @@ function App() {
     }
   }, []);
 
-  // Save filter preferences when they change
+  // Save set preferences when they change
   useEffect(() => {
     if (isStateLoaded) {
-      saveFilterPreferences(selectedFormat, selectedSet);
+      saveSetPreferences(selectedSets);
     }
-  }, [selectedFormat, selectedSet, isStateLoaded]);
+  }, [selectedSets, isStateLoaded]);
 
   // Save game active status when it changes
   useEffect(() => {
@@ -99,14 +96,13 @@ function App() {
   if (isGameActive) {
     return (
       <CardGuessingGame
-        selectedFormat={selectedFormat}
-        selectedSet={selectedSet}
+        selectedSets={selectedSets}
         onBackToSetup={backToSetup}
       />
     );
   }
 
-  // Setup view - responsive layout
+  // Setup view - simplified layout with integrated start button
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
@@ -116,55 +112,33 @@ function App() {
             MTG Card Name Learning Tool
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Test your Magic: The Gathering knowledge! Select your preferred format and set, 
-            then start guessing card names from the images.
+            Test your Magic: The Gathering knowledge! Choose your favorite sets 
+            to create a custom card pool, then guess card names from images.
           </p>
         </header>
 
         {/* Responsive Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* Left Column (Desktop) / Top Section (Mobile): Filters + Start Button */}
-          <div className="space-y-6">
+          {/* Left Column: Game Settings with Integrated Start Button */}
+          <div>
             <FilterDropdowns
-              selectedFormat={selectedFormat}
-              selectedSet={selectedSet}
-              onFormatChange={setSelectedFormat}
-              onSetChange={setSelectedSet}
+              selectedSets={selectedSets}
+              onSetsChange={setSelectedSets}
               onSearchResults={handleSearchResults}
               onSearchLoading={handleSearchLoading}
               onSearchError={handleSearchError}
+              onStartGame={startGame}
             />
-            
-            {/* Start Game Button - Below filters on desktop, after info on mobile */}
-            <div className="hidden lg:block">
-              <StartGameButton
-                searchResults={searchResults}
-                isSearchLoading={isSearchLoading}
-                searchError={searchError}
-                onStartGame={startGame}
-              />
-            </div>
           </div>
 
-          {/* Right Column (Desktop) / Middle Section (Mobile): Info Display */}
+          {/* Right Column: Game Information */}
           <div>
             <InfoDisplay
               searchResults={searchResults}
-              selectedFormat={selectedFormat}
-              selectedSet={selectedSet}
+              selectedSets={selectedSets}
               isSearchLoading={isSearchLoading}
               searchError={searchError}
-            />
-          </div>
-          
-          {/* Start Game Button - Bottom on mobile */}
-          <div className="lg:hidden">
-            <StartGameButton
-              searchResults={searchResults}
-              isSearchLoading={isSearchLoading}
-              searchError={searchError}
-              onStartGame={startGame}
             />
           </div>
         </div>

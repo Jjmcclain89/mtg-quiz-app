@@ -1,4 +1,4 @@
-// Scryfall API Service Layer
+// Scryfall API Service Layer - Multiple Sets Support
 // Handles all interactions with the Scryfall API for MTG card data
 
 import type {
@@ -17,76 +17,6 @@ import type {
 
 const SCRYFALL_API_BASE = 'https://api.scryfall.com';
 const REQUEST_DELAY = 100; // 100ms delay between requests to respect rate limits
-
-// Main competitive MTG formats (ordered by size - smallest to largest)
-const MTG_FORMATS = [
-  'standard',
-  'pioneer',
-  'modern', 
-  'legacy',
-  'vintage'
-];
-
-// =============================================================================
-// HIERARCHICAL FORMAT MAPPING (Optimized for Easy Maintenance)
-// =============================================================================
-
-/**
- * Hierarchical format mapping - each format includes all sets from smaller formats
- * To add a new set: just add it to STANDARD_SETS and it propagates automatically!
- * 
- * Format hierarchy: Standard → Pioneer → Modern → Legacy/Vintage
- */
-
-// Standard - Current rotation (UPDATE THIS WHEN NEW SETS RELEASE)
-const STANDARD_SETS = [
-  'dmu', 'bro', 'one', 'mom', 'mat', 'woe', 'lci', 'mkm', 'otj', 'blb', 'dsk', 'fdn', 'dft', 'tdm', 'fin'
-];
-
-// Pioneer additional sets (Return to Ravnica 2012 → pre-Standard)
-const PIONEER_ADDITIONAL_SETS = [
-  'rtr', 'gtc', 'dgm', 'm14', 'ths', 'bng', 'jou', 'm15', 'ktk', 'frf', 'dtk', 'ori',
-  'bfz', 'ogw', 'soi', 'emn', 'kld', 'aer', 'akh', 'hou', 'xln', 'rix', 'dom', 'm19',
-  'grn', 'rna', 'war', 'm20', 'eld', 'thb', 'iko', 'm21', 'znr', 'khm', 'stx', 'afr',
-  'mid', 'vow', 'neo', 'snc'
-];
-
-// Modern additional sets (8th Edition 2003 → pre-Pioneer)  
-const MODERN_ADDITIONAL_SETS = [
-  '8ed', 'mrd', 'dst', '5dn', 'chk', 'bok', 'sok', '9ed', 'rav', 'gpt', 'dis',
-  'csp', 'tsp', 'tsb', 'plc', 'fut', '10e', 'lrw', 'mor', 'shm', 'eve', 'ala',
-  'con', 'arb', 'm10', 'zen', 'wwk', 'roe', 'm11', 'som', 'mbs', 'nph', 'm12',
-  'isd', 'dka', 'avr', 'm13', 'mh2', 'ltr', 'mh3', 'clb'
-];
-
-// Legacy/Vintage additional sets (Alpha 1993 → pre-Modern)
-const LEGACY_ADDITIONAL_SETS = [
-  'lea', 'leb', '2ed', 'arn', 'atq', '3ed', 'leg', 'drk', 'fem', '4ed', 'ice',
-  'hml', 'all', 'csp', 'mir', 'vis', 'wth', 'tmp', 'sth', 'exo', 'usg', 'ulg',
-  'uds', '6ed', 'mmq', 'nem', 'pcy', 'inv', 'pls', 'apc', '7ed', 'ody', 'tor',
-  'jud', 'ons', 'lgn', 'scg'
-];
-
-/**
- * Build format mappings hierarchically - each format inherits from smaller formats
- * This ensures consistency and makes maintenance easy
- */
-const FORMAT_LEGAL_SETS: Record<string, string[]> = {
-  // Standard - Base format (smallest)
-  standard: [...STANDARD_SETS],
-  
-  // Pioneer - Standard + Pioneer additional sets
-  pioneer: [...STANDARD_SETS, ...PIONEER_ADDITIONAL_SETS],
-  
-  // Modern - Pioneer + Modern additional sets  
-  modern: [...STANDARD_SETS, ...PIONEER_ADDITIONAL_SETS, ...MODERN_ADDITIONAL_SETS],
-  
-  // Legacy - Modern + Legacy additional sets
-  legacy: [...STANDARD_SETS, ...PIONEER_ADDITIONAL_SETS, ...MODERN_ADDITIONAL_SETS, ...LEGACY_ADDITIONAL_SETS],
-  
-  // Vintage - Same as Legacy (for most purposes)
-  vintage: [...STANDARD_SETS, ...PIONEER_ADDITIONAL_SETS, ...MODERN_ADDITIONAL_SETS, ...LEGACY_ADDITIONAL_SETS]
-};
 
 // Simple request delay to avoid hitting rate limits
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -156,27 +86,6 @@ async function makeRequest<T>(endpoint: string): Promise<T> {
 }
 
 // =============================================================================
-// FORMAT OPERATIONS
-// =============================================================================
-
-/**
- * Get all available MTG formats
- * Returns the 5 main competitive formats
- */
-export async function fetchFormats(): Promise<string[]> {
-  try {
-    // Add a small delay to simulate API call for consistent UX
-    await delay(200);
-    
-    // Return the 5 main competitive formats
-    return [...MTG_FORMATS];
-  } catch (error) {
-    console.error('Failed to get formats:', error);
-    throw new ScryfallApiError('Failed to load MTG formats');
-  }
-}
-
-// =============================================================================
 // SET OPERATIONS
 // =============================================================================
 
@@ -206,115 +115,88 @@ export async function fetchSets(): Promise<ScryfallSet[]> {
   }
 }
 
-/**
- * Get sets that are legal in a specific format using hierarchical mapping
- * This provides instant results without slow API calls
- * @param format - MTG format (e.g., "standard", "modern")
- */
-export function getLegalSetsForFormat(format: string): string[] {
-  const legalSets = FORMAT_LEGAL_SETS[format.toLowerCase()];
-  if (!legalSets) {
-    console.warn(`No legal sets defined for format: ${format}`);
-    return [];
-  }
-  
-  console.log(`${format} format contains ${legalSets.length} legal sets`);
-  return [...legalSets];
-}
-
-/**
- * Filter sets by format legality using hierarchical mapping (instant)
- * @param allSets - All available sets
- * @param format - Format to filter by (null means show all sets)
- */
-export function filterSetsByFormat(allSets: ScryfallSet[], format: string | null): ScryfallSet[] {
-  if (!format || format === 'all') {
-    return allSets;
-  }
-  
-  try {
-    // Get set codes that are legal in this format (instant lookup)
-    const legalSetCodes = getLegalSetsForFormat(format);
-    
-    if (legalSetCodes.length === 0) {
-      console.warn(`No sets found for format ${format}, showing all sets`);
-      return allSets;
-    }
-    
-    // Filter the sets to only include those legal in the format
-    const filteredSets = allSets.filter(set => legalSetCodes.includes(set.code));
-    
-    console.log(`Filtered ${allSets.length} sets down to ${filteredSets.length} sets for ${format} format`);
-    
-    return filteredSets;
-    
-  } catch (error) {
-    console.error('Error filtering sets by format:', error);
-    // Return all sets if filtering fails
-    return allSets;
-  }
-}
-
 // =============================================================================
 // CARD SEARCH OPERATIONS
 // =============================================================================
 
 /**
- * Build search query from filter options
+ * Build search query for multiple sets
  */
-function buildSearchQuery(format?: string | null, setCode?: string | null): string {
-  const queryParts: string[] = [];
-  
-  // If a specific set is selected, only use the set filter (don't include format)
-  if (setCode && setCode !== 'all') {
-    queryParts.push(`set:${setCode}`);
-  } else {
-    // Only use format filter when no specific set is selected ("all sets")
-    if (format && format !== 'all') {
-      queryParts.push(`format:${format}`);
-    }
+function buildMultipleSetQuery(setCodes: string[]): string {
+  if (!setCodes || setCodes.length === 0) {
+    // No sets selected - return empty query that will give 0 results
+    return 'set:___NONE___'; // This will return no results
   }
   
-  // If no filters, search all cards
-  return queryParts.length > 0 ? queryParts.join(' ') : '*';
+  if (setCodes.length === 1) {
+    // Single set
+    return `set:${setCodes[0]}`;
+  }
+  
+  // Multiple sets - use OR operator
+  const setQueries = setCodes.map(code => `set:${code}`);
+  return `(${setQueries.join(' OR ')})`;
 }
 
 /**
- * Search for cards with optional format and set filters
- * @param format - MTG format (e.g., "standard", "modern") or null for all formats
- * @param setCode - Set code (e.g., "neo", "mh2") or null for all sets
+ * Search for cards from multiple sets
+ * @param setCodes - Array of set codes to search in
  * @param page - Page number for pagination (1-based)
  */
-export async function searchCards(
-  format?: string | null,
-  setCode?: string | null,
+export async function searchCardsMultipleSets(
+  setCodes: string[],
   page: number = 1
 ): Promise<ScryfallSearchResponse> {
-  const query = buildSearchQuery(format, setCode);
+  
+  // If no sets selected, return empty result immediately
+  if (!setCodes || setCodes.length === 0) {
+    return {
+      object: 'list',
+      total_cards: 0,
+      has_more: false,
+      data: []
+    };
+  }
+  
+  const query = buildMultipleSetQuery(setCodes);
   const endpoint = `/cards/search?q=${encodeURIComponent(query)}&page=${page}`;
   
   try {
+    console.log(`Searching cards from ${setCodes.length} sets:`, setCodes);
     return await makeRequest<ScryfallSearchResponse>(endpoint);
   } catch (error) {
-    console.error('Failed to search cards:', error);
+    console.error('Failed to search cards from multiple sets:', error);
     throw new ScryfallApiError('Failed to search for cards');
   }
 }
 
 /**
- * Get a random card from the filtered card pool
+ * Legacy function for compatibility - redirects to single set search
+ */
+export async function searchCards(
+  format?: string | null, // Ignored but kept for compatibility
+  setCode?: string | null,
+  page: number = 1
+): Promise<ScryfallSearchResponse> {
+  const setCodes = setCode ? [setCode] : [];
+  return searchCardsMultipleSets(setCodes, page);
+}
+
+/**
+ * Get a random card from the selected sets
  * Uses search with random page selection for better distribution
  */
-export async function getRandomCard(
-  format?: string | null,
-  setCode?: string | null
-): Promise<ScryfallCard> {
+export async function getRandomCardFromSets(setCodes: string[]): Promise<ScryfallCard> {
   try {
+    if (!setCodes || setCodes.length === 0) {
+      throw new ScryfallApiError('No sets selected for random card selection');
+    }
+    
     // First, get the total number of cards to calculate random page
-    const firstPage = await searchCards(format, setCode, 1);
+    const firstPage = await searchCardsMultipleSets(setCodes, 1);
     
     if (firstPage.total_cards === 0) {
-      throw new ScryfallApiError('No cards found with the selected filters');
+      throw new ScryfallApiError('No cards found in the selected sets');
     }
     
     // Calculate random page (Scryfall returns ~175 cards per page)
@@ -323,7 +205,7 @@ export async function getRandomCard(
     const randomPage = Math.floor(Math.random() * totalPages) + 1;
     
     // Get random page
-    const randomPageResponse = await searchCards(format, setCode, randomPage);
+    const randomPageResponse = await searchCardsMultipleSets(setCodes, randomPage);
     
     if (randomPageResponse.data.length === 0) {
       throw new ScryfallApiError('No cards found on selected page');
@@ -331,15 +213,29 @@ export async function getRandomCard(
     
     // Pick random card from that page
     const randomIndex = Math.floor(Math.random() * randomPageResponse.data.length);
-    return randomPageResponse.data[randomIndex];
+    const selectedCard = randomPageResponse.data[randomIndex];
+    
+    console.log(`Selected random card: ${selectedCard.name} from ${selectedCard.set_name}`);
+    return selectedCard;
     
   } catch (error) {
-    console.error('Failed to get random card:', error);
+    console.error('Failed to get random card from sets:', error);
     if (error instanceof ScryfallApiError) {
       throw error;
     }
     throw new ScryfallApiError('Failed to get random card');
   }
+}
+
+/**
+ * Legacy function for compatibility - redirects to multiple sets version
+ */
+export async function getRandomCard(
+  format?: string | null, // Ignored but kept for compatibility
+  setCode?: string | null
+): Promise<ScryfallCard> {
+  const setCodes = setCode ? [setCode] : [];
+  return getRandomCardFromSets(setCodes);
 }
 
 // =============================================================================
@@ -389,13 +285,6 @@ export function getCardImageUrl(card: ScryfallCard, size: 'small' | 'normal' | '
 }
 
 /**
- * Check if a card is legal in a specific format
- */
-export function isCardLegalInFormat(card: ScryfallCard, format: string): boolean {
-  return card.legalities[format] === 'legal';
-}
-
-/**
  * Normalize card name for comparison (remove special characters, lowercase)
  */
 export function normalizeCardName(name: string): string {
@@ -417,36 +306,19 @@ export function cardNamesMatch(guess: string, correctName: string): boolean {
 }
 
 /**
- * Get all available MTG formats for reference
+ * Get cards count for multiple sets (for info display)
  */
-export function getAllFormats(): string[] {
-  return [...MTG_FORMATS];
-}
-
-/**
- * Get all defined format-set mappings for reference
- */
-export function getFormatSetMappings(): Record<string, string[]> {
-  return { ...FORMAT_LEGAL_SETS };
-}
-
-/**
- * Add a new set to Standard (and automatically to all other formats)
- * This is the ONLY function you need to call when a new set releases!
- * @param setCode - New set code to add (e.g., 'mkc')
- */
-export function addNewSetToStandard(setCode: string): void {
-  if (!STANDARD_SETS.includes(setCode)) {
-    STANDARD_SETS.push(setCode);
+export async function getCardCountForSets(setCodes: string[]): Promise<number> {
+  try {
+    if (!setCodes || setCodes.length === 0) {
+      return 0;
+    }
     
-    // Rebuild all format mappings to include the new set
-    FORMAT_LEGAL_SETS.standard = [...STANDARD_SETS];
-    FORMAT_LEGAL_SETS.pioneer = [...STANDARD_SETS, ...PIONEER_ADDITIONAL_SETS];
-    FORMAT_LEGAL_SETS.modern = [...STANDARD_SETS, ...PIONEER_ADDITIONAL_SETS, ...MODERN_ADDITIONAL_SETS];
-    FORMAT_LEGAL_SETS.legacy = [...STANDARD_SETS, ...PIONEER_ADDITIONAL_SETS, ...MODERN_ADDITIONAL_SETS, ...LEGACY_ADDITIONAL_SETS];
-    FORMAT_LEGAL_SETS.vintage = [...STANDARD_SETS, ...PIONEER_ADDITIONAL_SETS, ...MODERN_ADDITIONAL_SETS, ...LEGACY_ADDITIONAL_SETS];
-    
-    console.log(`Added ${setCode} to all formats. Standard now has ${STANDARD_SETS.length} sets.`);
+    const firstPage = await searchCardsMultipleSets(setCodes, 1);
+    return firstPage.total_cards;
+  } catch (error) {
+    console.error('Failed to get card count for sets:', error);
+    return 0;
   }
 }
 
